@@ -2,14 +2,55 @@ defmodule Submarine do
   use Bitwise
 
   def calculate_power_consumption(filename) do
-    data_report =
-      filename
-      |> File.stream!()
-      |> Enum.map(fn data_line ->
-        data_line |> String.trim() |> String.to_charlist()
-      end)
-
+    data_report = get_data_report(filename)
     {calculate_gamma_rate(data_report), calculate_epsilon_rate(data_report)}
+  end
+
+  def get_data_report(filename) do
+    filename
+    |> File.stream!()
+    |> Enum.map(fn data_line ->
+      data_line |> String.trim() |> String.to_charlist()
+    end)
+  end
+
+  def calculate_o2_and_co2(filename) do
+    data_report = get_data_report(filename)
+    {calculate_oxygen_generator_rating(data_report), calculate_co2_scrubber_rating(data_report)}
+  end
+
+  def calculate_oxygen_generator_rating(data) do
+    word_size = hd(data) |> Enum.count()
+
+    (word_size - 1)..0
+    |> Enum.reduce(data, fn position, data ->
+      bit = most_common_bit(data, position)
+
+      Enum.filter(data, fn word ->
+        <<Enum.at(word |> Enum.reverse(), position)>> == "#{bit}"
+      end)
+    end)
+    |> hd
+    |> word_to_integer()
+  end
+
+  def calculate_co2_scrubber_rating(data) do
+    word_size = hd(data) |> Enum.count()
+
+    (word_size - 1)..0
+    |> Enum.reduce(data, fn position, data ->
+      bit = least_common_bit(data, position)
+
+      if Enum.count(data) > 1 do
+        Enum.filter(data, fn word ->
+          <<Enum.at(word |> Enum.reverse(), position)>> == "#{bit}"
+        end)
+      else
+        data
+      end
+    end)
+    |> hd
+    |> word_to_integer()
   end
 
   def calculate_gamma_rate(data) do
@@ -33,7 +74,7 @@ defmodule Submarine do
   def most_common_bit(data, position) do
     case Enum.count(data, fn value ->
            (value |> word_to_integer &&& Integer.pow(2, position)) >= 1
-         end) > Enum.count(data) / 2 do
+         end) >= Enum.count(data) / 2 do
       true -> 1
       false -> 0
     end
@@ -42,7 +83,7 @@ defmodule Submarine do
   def least_common_bit(data, position) do
     case Enum.count(data, fn value ->
            (value |> word_to_integer &&& Integer.pow(2, position)) >= 1
-         end) > Enum.count(data) / 2 do
+         end) >= Enum.count(data) / 2 do
       true -> 0
       false -> 1
     end
@@ -63,7 +104,6 @@ end
 {22, 9} = Submarine.calculate_power_consumption("test_input.txt")
 {2027, 2068} = Submarine.calculate_power_consumption("test_input2.txt")
 
-{gamma, epsilon} = Submarine.calculate_power_consumption("input.txt")
-IO.puts(gamma * epsilon)
-
-# TODO: https://adventofcode.com/2021/day/3#part2
+{23, 10} = Submarine.calculate_o2_and_co2("test_input.txt")
+{o2, co2} = Submarine.calculate_o2_and_co2("input.txt")
+IO.puts(o2 * co2)
