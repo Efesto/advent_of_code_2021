@@ -40,8 +40,7 @@ defmodule Day05 do
         end)
 
       false ->
-        []
-        # TODO
+        Enum.zip(x..x2, y..y2)
     end
   end
 
