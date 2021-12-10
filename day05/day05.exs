@@ -30,18 +30,24 @@ defmodule Day05 do
     x == x2 || y == y2
   end
 
-  def intermediate_points({{x, y}, {x2, y2}}) do
-    Enum.flat_map(x..x2, fn x ->
-      Enum.map(y..y2, fn y ->
-        {x, y}
-      end)
-    end)
+  def intermediate_points({{x, y}, {x2, y2}} = coordinates) do
+    case horizontal_or_vertical?(coordinates) do
+      true ->
+        Enum.flat_map(x..x2, fn x ->
+          Enum.map(y..y2, fn y ->
+            {x, y}
+          end)
+        end)
+
+      false ->
+        []
+        # TODO
+    end
   end
 
   def count_intersections(file_name) do
     file_name
     |> read_input()
-    |> Enum.filter(&horizontal_or_vertical?/1)
     |> Enum.flat_map(&intermediate_points/1)
     |> Enum.reduce(%{}, fn coordinate, acc ->
       Map.put(acc, coordinate, Map.get(acc, coordinate, 0) + 1)
@@ -50,5 +56,5 @@ defmodule Day05 do
   end
 end
 
-5 = Day05.count_intersections("test_input.txt")
+12 = Day05.count_intersections("test_input.txt")
 IO.inspect(Day05.count_intersections("input.txt"))
