@@ -27,11 +27,20 @@ defmodule Bingo do
         acc
         |> Enum.map(fn board -> mark_draw_on_board(draw, board) end)
 
-      winning_board =
+      winning_boards =
         boards
-        |> Enum.find(&board_won?/1)
+        |> Enum.filter(&board_won?/1)
 
-      if winning_board != nil, do: {:halt, {draw, winning_board}}, else: {:cont, boards}
+      cond do
+        winning_boards != [] && length(boards) > length(winning_boards) ->
+          {:cont, boards -- winning_boards}
+
+        winning_boards != [] ->
+          {:halt, {draw, hd(winning_boards)}}
+
+        true ->
+          {:cont, boards}
+      end
     end)
     |> calculate_score()
   end
@@ -75,6 +84,6 @@ defmodule Bingo do
   end
 end
 
-4512 = Bingo.calculate_winning("test_input.txt")
+1924 = Bingo.calculate_winning("test_input.txt")
 
 IO.puts(Bingo.calculate_winning("input.txt"))
